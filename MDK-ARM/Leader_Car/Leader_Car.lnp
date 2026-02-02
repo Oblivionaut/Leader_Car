@@ -1,0 +1,26 @@
+--cpu Cortex-M3
+"leader_car\startup_stm32f103xb.o"
+"leader_car\main.o"
+"leader_car\gpio.o"
+"leader_car\tim.o"
+"leader_car\stm32f1xx_it.o"
+"leader_car\stm32f1xx_hal_msp.o"
+"leader_car\stm32f1xx_hal_gpio_ex.o"
+"leader_car\stm32f1xx_hal_tim.o"
+"leader_car\stm32f1xx_hal_tim_ex.o"
+"leader_car\stm32f1xx_hal.o"
+"leader_car\stm32f1xx_hal_rcc.o"
+"leader_car\stm32f1xx_hal_rcc_ex.o"
+"leader_car\stm32f1xx_hal_gpio.o"
+"leader_car\stm32f1xx_hal_dma.o"
+"leader_car\stm32f1xx_hal_cortex.o"
+"leader_car\stm32f1xx_hal_pwr.o"
+"leader_car\stm32f1xx_hal_flash.o"
+"leader_car\stm32f1xx_hal_flash_ex.o"
+"leader_car\stm32f1xx_hal_exti.o"
+"leader_car\system_stm32f1xx.o"
+"leader_car\motor.o"
+--strict --scatter "Leader_Car\Leader_Car.sct"
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "Leader_Car.map" -o Leader_Car\Leader_Car.axf
