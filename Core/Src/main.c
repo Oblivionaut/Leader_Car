@@ -20,15 +20,17 @@
 #include "main.h"
 #include "tim.h"
 #include "gpio.h"
+#include "OLED.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "motor.h"
+#include "PID.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -55,6 +57,7 @@ uint16_t MG310_Speed = 19999; //电机转速
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -94,14 +97,23 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_TIM2_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-	
+	//电机启动
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
-	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, MG310_Speed);
-	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, MG310_Speed);
+//	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 20000);
+//	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, 20000);
+	//定时器启动，编码器测速
+	HAL_TIM_Base_Start_IT(&htim3);
 	
-	Motor_Duty(5000);
+
+	MotorA_Duty(10);
+	MotorB_Duty(10);
+
+	Motor_PID_Init();
+	OLED_Init();
+	Motor_Target_Set(10);
 	
   /* USER CODE END 2 */
 
@@ -109,6 +121,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  OLED_ShowNum(2,1, A, 3);
+	  OLED_ShowNum(3,1, B, 3);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -156,6 +170,34 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+//编码器计数
+/**
+  * @brief  EXTI line detection callbacks.
+  * @param  GPIO_Pin: Specifies the pins connected EXTI line
+  * @retval None
+  */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if(HAL_GPIO_ReadPin(GPIOA, GPIO_Pin))
+	{
+		Encoder_Count--;
+	}else{
+		Encoder_Count++;
+	}
+}
+
+//编码器测速,TIM3定时中断
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if(htim -> Instance == TIM3)
+	{
+//		Speed_Now = Encoder_Count;
+//		Encoder_Count = 0;
+		Motor_PID_Control();
+	}
+
+}
+
 
 /* USER CODE END 4 */
 

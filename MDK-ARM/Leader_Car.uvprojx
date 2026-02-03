@@ -510,6 +510,31 @@
               <FileType>5</FileType>
               <FilePath>..\User_Lib\inc\motor.h</FilePath>
             </File>
+            <File>
+              <FileName>PID.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User_Lib\inc\PID.h</FilePath>
+            </File>
+            <File>
+              <FileName>PID.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User_Lib\src\PID.c</FilePath>
+            </File>
+            <File>
+              <FileName>OLED.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User_Lib\inc\OLED.h</FilePath>
+            </File>
+            <File>
+              <FileName>OLED.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User_Lib\src\OLED.c</FilePath>
+            </File>
+            <File>
+              <FileName>OLED_Font.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User_Lib\inc\OLED_Font.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
