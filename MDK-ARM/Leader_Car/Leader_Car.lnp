@@ -3,6 +3,7 @@
 "leader_car\main.o"
 "leader_car\gpio.o"
 "leader_car\tim.o"
+"leader_car\usart.o"
 "leader_car\stm32f1xx_it.o"
 "leader_car\stm32f1xx_hal_msp.o"
 "leader_car\stm32f1xx_hal_gpio_ex.o"
@@ -18,10 +19,12 @@
 "leader_car\stm32f1xx_hal_flash.o"
 "leader_car\stm32f1xx_hal_flash_ex.o"
 "leader_car\stm32f1xx_hal_exti.o"
+"leader_car\stm32f1xx_hal_uart.o"
 "leader_car\system_stm32f1xx.o"
 "leader_car\motor.o"
 "leader_car\pid.o"
 "leader_car\oled.o"
+"leader_car\usart3_debug.o"
 --strict --scatter "Leader_Car\Leader_Car.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers

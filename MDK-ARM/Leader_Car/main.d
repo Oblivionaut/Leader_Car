@@ -27,8 +27,12 @@ leader_car\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash_ex.h
 leader_car\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h
 leader_car\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h
 leader_car\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h
+leader_car\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h
 leader_car\main.o: ../Core/Inc/tim.h
+leader_car\main.o: ../Core/Inc/usart.h
 leader_car\main.o: ../Core/Inc/gpio.h
-leader_car\main.o: ../User_Lib/inc/OLED.h
 leader_car\main.o: ../User_Lib/inc/motor.h
 leader_car\main.o: ../User_Lib/inc/PID.h
+leader_car\main.o: ../User_Lib/inc/OLED.h
+leader_car\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
+leader_car\main.o: ../User_Lib/inc/usart3_debug.h
