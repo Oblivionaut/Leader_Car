@@ -28,7 +28,9 @@
 #include "PID.h"
 #include "OLED.h"
 #include "stdio.h"
-#include "usart3_debug.h"x
+#include "usart3_debug.h"
+#include <string.h>
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -54,15 +56,14 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 
 /* USER CODE BEGIN PV */
 
-uint16_t MG310_Speed = 19999; //电机转速
 uint32_t last_print = 0;
 uint32_t last_wave_send = 0;
+volatile uint8_t send_flag = 0;
+static uint8_t div = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-
-
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -102,54 +103,36 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_USART3_UART_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
-  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
 	//电机启动
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
-//	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 20000);
-//	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, 20000);
 	//定时器启动，编码器测速
 	HAL_TIM_Base_Start_IT(&htim3);
-	
 
-//	MotorA_Duty(10);
-//	MotorB_Duty(10);
-
-	Motor_PID_Init();
+	PID_Init(&MotorA, DELTA_PID, 50, 350, 0);
+	PID_Init(&MotorB, DELTA_PID, 50, 350, 0);
 	OLED_Init();
-	Motor_Target_Set(50, 50);//小车两轮速度设置
-	UART3_Debug_Init();
+
+//	MotorA_Duty(2000);
+//	MotorB_Duty(2000);
+	Motor_Target_Set(10, 10);
 	
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
   while (1)
   {
-	  
-//	  OLED_ShowNum(2,1, Encoder_CountA, 3);
-//	  OLED_ShowNum(3,1, Encoder_CountB, 3);
-//	if(HAL_GetTick() - last_print >= 500) // 500ms打印一次
-//    {
-//        char buf[100];
-//        int len = snprintf(buf, sizeof(buf),
-//            "A: T=%d A=%d O=%d | B: T=%d A=%d O=%d\r\n",
-//            MotorA_PID.Target, MotorA_PID.Actual, MotorA_PID.Out,
-//            MotorB_PID.Target, MotorB_PID.Actual, MotorB_PID.Out);
-
-//        HAL_UART_Transmit(&huart3, (uint8_t*)buf, len, 10);
-//        last_print = HAL_GetTick();
-//    }
-	
-	if(HAL_GetTick() - last_wave_send >= 20)
-{
-    datavision_send();
-    last_wave_send = HAL_GetTick();
-}
-	
+	if(send_flag)
+    {
+        send_flag = 0;
+        datavision_send();
+    }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -198,11 +181,6 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 //编码器计数
-/**
-  * @brief  EXTI line detection callbacks.
-  * @param  GPIO_Pin: Specifies the pins connected EXTI line
-  * @retval None
-  */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
     // 电机 A：A 相中断，B 相判方向
@@ -229,13 +207,25 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if(htim -> Instance == TIM3)
 	{
-//		Speed_Now = Encoder_Count;
-//		Encoder_Count = 0;
-		Motor_PID_Control();
+//		SpeedA_Now = Encoder_CountA;
+//		SpeedB_Now = Encoder_CountB;
+//		Encoder_CountA = 0;
+//		Encoder_CountB = 0;
+		PID_Control();
+			if (++div >= 5)   // 10ms × 5 = 50ms
+       {
+        div = 0;
+        send_flag = 1;
+       }
 	}
 
 }
 
+int fputc(int ch, FILE *f)
+{
+	HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+	return ch;
+}
 
 /* USER CODE END 4 */
 
@@ -250,6 +240,7 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
+	  
   }
   /* USER CODE END Error_Handler_Debug */
 }

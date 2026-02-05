@@ -25,7 +25,7 @@
 "leader_car\pid.o"
 "leader_car\oled.o"
 "leader_car\usart3_debug.o"
---strict --scatter "Leader_Car\Leader_Car.sct"
+--library_type=microlib --strict --scatter "Leader_Car\Leader_Car.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers
 --list "Leader_Car.map" -o Leader_Car\Leader_Car.axf

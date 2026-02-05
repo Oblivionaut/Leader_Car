@@ -1,10 +1,4 @@
 leader_car\pid.o: ..\User_Lib\src\PID.c
-leader_car\pid.o: ../User_Lib/inc/PID.h
-leader_car\pid.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
-leader_car\pid.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\math.h
-leader_car\pid.o: ../User_Lib/inc/motor.h
-leader_car\pid.o: ../Core/Inc/gpio.h
-leader_car\pid.o: ../Core/Inc/main.h
 leader_car\pid.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h
 leader_car\pid.o: ../Core/Inc/stm32f1xx_hal_conf.h
 leader_car\pid.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rcc.h
@@ -12,6 +6,7 @@ leader_car\pid.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_def.h
 leader_car\pid.o: ../Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f1xx.h
 leader_car\pid.o: ../Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f103xb.h
 leader_car\pid.o: ../Drivers/CMSIS/Include/core_cm3.h
+leader_car\pid.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
 leader_car\pid.o: ../Drivers/CMSIS/Include/cmsis_version.h
 leader_car\pid.o: ../Drivers/CMSIS/Include/cmsis_compiler.h
 leader_car\pid.o: ../Drivers/CMSIS/Include/cmsis_armcc.h
@@ -32,6 +27,8 @@ leader_car\pid.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h
 leader_car\pid.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h
 leader_car\pid.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h
 leader_car\pid.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h
-leader_car\pid.o: ../User_Lib/inc/OLED.h
+leader_car\pid.o: ../User_Lib/inc/motor.h
+leader_car\pid.o: ../Core/Inc/gpio.h
+leader_car\pid.o: ../Core/Inc/main.h
+leader_car\pid.o: ../User_Lib/inc/PID.h
 leader_car\pid.o: ../Core/Inc/usart.h
-leader_car\pid.o: ../User_Lib/inc/usart3_debug.h

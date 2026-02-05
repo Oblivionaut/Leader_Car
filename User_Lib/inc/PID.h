@@ -1,56 +1,30 @@
-#ifndef __PID_H
-#define __PID_H
+#ifndef __PID_h_
+#define __PID_h_
 
-#include <stdint.h>
-
-typedef struct {
-	float Target;
-	float Actual;
-	float Out;
-	
-	float Err0;
-	float Err1;
-	float ErrInt;
-	
-	float ErrIntThreshold;
-	
-	float Kp;
-	float Ki;
-	float Kd;
-	
-	float OutMax;
-	float OutMin;
-} PID_t;
-
-typedef struct {
-    int targetA, actualA, outA;
-    float KpA, KiA, KdA;
-    int targetB, actualB, outB;
-    float KpB, KiB, KdB;
-} PID_Debug_t;
+enum
+{
+  POSITION_PID = 0,  // 位置式
+  DELTA_PID,         // 增量式
+};
 
 typedef struct
 {
-    int16_t targetA;
-    int16_t actualA;
-    int16_t outA;
-    int16_t targetB;
-    int16_t actualB;
-    int16_t outB;
-} Waveform_Data_t;
+	float target;	
+	float now;
+	float error[3];		
+	float p,i,d;
+	float pout, dout, iout;
+	float out;   
+	
+	uint32_t pid_mode;
 
-extern Waveform_Data_t wave_data;
-
-void PID_Clear(PID_t *p);
-void PID_Update(PID_t *p);
-void Motor_PID_Init(void);
+}pid_t;
+void PID_Init(pid_t *pid, uint32_t mode, float p, float i, float d);
+void pid_cal(pid_t *pid);
+void PID_Control(void);
 void Motor_Target_Set(int speA, int speB);
-void Motor_PID_Control(void);
-void datavision_send(void);
+void datavision_send();
 
-extern int A,B;
-
-extern PID_t MotorA_PID;
-extern PID_t MotorB_PID;
-extern PID_Debug_t pid_debug;
+extern pid_t MotorA;
+extern pid_t MotorB;
 #endif

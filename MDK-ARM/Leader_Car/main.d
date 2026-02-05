@@ -36,3 +36,4 @@ leader_car\main.o: ../User_Lib/inc/PID.h
 leader_car\main.o: ../User_Lib/inc/OLED.h
 leader_car\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
 leader_car\main.o: ../User_Lib/inc/usart3_debug.h
+leader_car\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
