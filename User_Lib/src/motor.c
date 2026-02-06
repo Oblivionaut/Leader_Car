@@ -3,6 +3,8 @@
 #include "PID.h"
 
 #define MAX_DUTY 50000
+
+
 volatile int Encoder_CountA = 0;
 volatile int Encoder_CountB = 0;
 int SpeedA_Now = 0;

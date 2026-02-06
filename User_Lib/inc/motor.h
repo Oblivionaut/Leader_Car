@@ -3,6 +3,9 @@
 #include "gpio.h"
 #define MAX_DUTY 50000
 
+#define ENCODER_LINE 11   //编码器线数
+#define SCALE_FACTOR 1   //放大倍数
+
 
 extern int Encoder_CountA;
 extern int Encoder_CountB;

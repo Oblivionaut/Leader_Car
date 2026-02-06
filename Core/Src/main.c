@@ -103,9 +103,9 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_USART3_UART_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
+  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
 	//电机启动
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
@@ -113,13 +113,13 @@ int main(void)
 	//定时器启动，编码器测速
 	HAL_TIM_Base_Start_IT(&htim3);
 
-	PID_Init(&MotorA, DELTA_PID, 50, 350, 0);
-	PID_Init(&MotorB, DELTA_PID, 50, 350, 0);
+	PID_Init(&MotorA, DELTA_PID, 5.0f, 15.0f, 0.0f);
+	PID_Init(&MotorB, DELTA_PID, 5.0f, 15.0f, 0.0f);
 	OLED_Init();
 
 //	MotorA_Duty(2000);
 //	MotorB_Duty(2000);
-	Motor_Target_Set(10, 10);
+	Motor_Target_Set(30, 30);
 	
   /* USER CODE END 2 */
 

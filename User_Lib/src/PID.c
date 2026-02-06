@@ -8,6 +8,10 @@ pid_t MotorB;
 uint8_t head[2] = {0x03, 0xFC};
 uint8_t tail[2] = {0xFC, 0x03};
 
+static uint16_t speed_tick = 0;     // 速度统计节拍
+static int32_t encA_sum = 0;
+static int32_t encB_sum = 0;
+
 void datavision_send()
 {
 	
@@ -63,31 +67,38 @@ void Motor_Target_Set(int speA, int speB)
 
 void PID_Control()
 {
-	if(motorA_dir)
-	{
-		MotorA.now = Encoder_CountA;
-	}
-	else
-	{
-		MotorA.now = -Encoder_CountA;
-	}
-	
-	if(motorB_dir)
-	{
-		MotorB.now = Encoder_CountB;
-	}
-	else
-	{
-		MotorB.now = -Encoder_CountB;
-	}
-	
-	Encoder_CountA = 0;
-	Encoder_CountB = 0;
-	pid_cal(&MotorA);
-	pid_cal(&MotorB);
-	MotorA_Duty(MotorA.out);
-	MotorB_Duty(MotorB.out);
-	
+    //累加编码器
+    encA_sum += Encoder_CountA;
+    encB_sum += Encoder_CountB;
+
+    Encoder_CountA = 0;
+    Encoder_CountB = 0;
+
+    speed_tick++;
+
+    //每 5 次更新一次速度 
+    if(speed_tick >= 5)
+    {
+        if(motorA_dir)
+            MotorA.now = encA_sum * SCALE_FACTOR;
+        else
+            MotorA.now = -encA_sum * SCALE_FACTOR;
+
+        if(motorB_dir)
+            MotorB.now = encB_sum * SCALE_FACTOR;
+        else
+            MotorB.now = -encB_sum * SCALE_FACTOR;
+
+        encA_sum = 0;
+        encB_sum = 0;
+        speed_tick = 0;
+    }
+
+    pid_cal(&MotorA);
+    pid_cal(&MotorB);
+
+    MotorA_Duty(MotorA.out);
+    MotorB_Duty(MotorB.out);
 }
 
 void pid_cal(pid_t *pid)
