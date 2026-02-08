@@ -23,7 +23,7 @@ void PID_Init(pid_t *pid, uint32_t mode, float p, float i, float d);
 void pid_cal(pid_t *pid);
 void PID_Control(void);
 void Motor_Target_Set(int speA, int speB);
-void datavision_send();
+void datavision_send(void);
 
 extern pid_t MotorA;
 extern pid_t MotorB;

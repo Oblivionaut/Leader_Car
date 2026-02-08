@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "i2c.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -31,6 +32,8 @@
 #include "usart3_debug.h"
 #include <string.h>
 #include <stdio.h>
+#include "tcrt5000.h"
+#include "MPU6050.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -60,6 +63,14 @@ uint32_t last_print = 0;
 uint32_t last_wave_send = 0;
 volatile uint8_t send_flag = 0;
 static uint8_t div = 0;
+int16_t AX = 0;
+int16_t AY = 0;
+int16_t AZ = 0;
+int16_t GX = 0;
+int16_t GY = 0;
+int16_t GZ = 0;
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -103,9 +114,11 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_USART3_UART_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
+  MX_USART3_UART_Init();
+//  MX_I2C1_Init();
+  
   /* USER CODE BEGIN 2 */
 	//电机启动
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
@@ -113,13 +126,15 @@ int main(void)
 	//定时器启动，编码器测速
 	HAL_TIM_Base_Start_IT(&htim3);
 
-	PID_Init(&MotorA, DELTA_PID, 50, 350, 0);
-	PID_Init(&MotorB, DELTA_PID, 50, 350, 0);
+	PID_Init(&MotorA, DELTA_PID, 5.0f, 15.0f, 0.0f);
+	PID_Init(&MotorB, DELTA_PID, 5.0f, 15.0f, 0.0f);
 	OLED_Init();
+//	MPU6050_Init();
 
 //	MotorA_Duty(2000);
 //	MotorB_Duty(2000);
-	Motor_Target_Set(10, 10);
+//	Motor_Target_Set(30, 30);
+	
 	
   /* USER CODE END 2 */
 
@@ -128,6 +143,8 @@ int main(void)
 
   while (1)
   {
+	  TCRT_Init();//寻迹
+//	  printf("AX:%d, AY:%d, AZ:%d, GX:%d, GY:%d, GZ:%d",AX, AY, AZ, GX, GY, GZ  );
 	if(send_flag)
     {
         send_flag = 0;
@@ -200,6 +217,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         else
             Encoder_CountB--;
     }
+//	else if (GPIO_Pin == GPIO_PIN_15)//MPU6050
+//    {
+//        MPU6050_GetData(&AX, &AY, &AZ, &GX, &GY, &GZ);
+//    }
 }
 
 //编码器测速,TIM3定时中断
