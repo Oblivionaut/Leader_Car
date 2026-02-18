@@ -2,9 +2,12 @@
 #include "motor.h"
 #include "PID.h"
 #include "usart.h"
+#include "MPU6050.h"
+#include <stdlib.h>
 
 pid_t MotorA;
 pid_t MotorB;
+pid_t angle;
 uint8_t head[2] = {0x03, 0xFC};
 uint8_t tail[2] = {0xFC, 0x03};
 
@@ -67,6 +70,12 @@ void Motor_Target_Set(int speA, int speB)
 
 void PID_Control()
 {
+	//角度环
+//	angle.target = -20;
+//	angle.now = yaw_Kalman;//偏航角
+//	pid_cal(&angle);
+//	//速度环
+//	Motor_Target_Set(-angle.out, angle.out);
     //累加编码器
     encA_sum += Encoder_CountA;
     encB_sum += Encoder_CountB;
@@ -96,7 +105,9 @@ void PID_Control()
 
     pid_cal(&MotorA);
     pid_cal(&MotorB);
-
+	pid_Limit(&MotorA);
+	pid_Limit(&MotorB);
+	
     MotorA_Duty(MotorA.out);
     MotorB_Duty(MotorB.out);
 }
@@ -126,12 +137,32 @@ void pid_cal(pid_t *pid)
 	pid->error[2] = pid->error[1];
 	pid->error[1] = pid->error[0];
 
-	// 输出限幅
-	if(pid->out>=MAX_DUTY)	
-		pid->out=MAX_DUTY;
-	if(pid->out<=0)	
-		pid->out=0;
+	//输出限制
+//    if(pid == &MotorA || pid == &MotorB)
+//    {
+//        // 电机环：输出非负，且不超过最大占空比
+//        if(pid->out >= MAX_DUTY)    
+//            pid->out = MAX_DUTY;
+//        if(pid->out <= 0)    
+//            pid->out = 0;
+//    }
+//    else
+//    {
+//        // 角度环：支持正负输出，限幅范围根据实际需求调整
+//        if(pid->out >= MAX_DUTY)    
+//            pid->out = MAX_DUTY;
+//        if(pid->out <= -MAX_DUTY)    
+//            pid->out = -MAX_DUTY;
+//    }
+}
+
+void pid_Limit(pid_t *pid)
+{
 	
+        if(pid->out >= MAX_DUTY)    
+            pid->out = MAX_DUTY;
+        if(pid->out <= 0)    
+            pid->out = 0;
 }
 
 

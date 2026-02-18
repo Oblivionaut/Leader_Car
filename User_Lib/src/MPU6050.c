@@ -1,4 +1,8 @@
 #include "MPU6050.h"
+#include <stdlib.h>
+float roll_gyro, pitch_gyro, yaw_gyro;
+float roll_acc, pitch_acc, yaw_acc;
+float roll_Kalman, pitch_Kalman, yaw_Kalman;
 
 /**
  * @brief  向MPU6050写入一个字节
@@ -106,5 +110,10 @@ void MPU6050_GetData(int16_t *AccX, int16_t *AccY, int16_t *AccZ,
     DataH = MPU6050_Read(GYRO_ZOUT_H);
     DataL = MPU6050_Read(GYRO_ZOUT_H + 1);
     *GyroZ = (DataH << 8) | DataL;
+	
+	int16_t gyro_z_offset = 15;  // 零漂偏移量（根据实际校准调整）
+    *GyroZ -= gyro_z_offset;
+    if(abs(*GyroZ) < 20)  // 小阈值设为0，避免微小波动
+        *GyroZ = 0;
 }
 

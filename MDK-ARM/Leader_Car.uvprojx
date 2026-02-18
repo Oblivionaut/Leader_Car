@@ -785,6 +785,16 @@
               <FileType>1</FileType>
               <FilePath>..\User_Lib\src\MPU6050.c</FilePath>
             </File>
+            <File>
+              <FileName>filter.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User_Lib\inc\filter.h</FilePath>
+            </File>
+            <File>
+              <FileName>filter.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User_Lib\src\filter.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

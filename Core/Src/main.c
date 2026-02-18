@@ -34,6 +34,8 @@
 #include <stdio.h>
 #include "tcrt5000.h"
 #include "MPU6050.h"
+#include <math.h>
+#include "filter.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -69,6 +71,7 @@ int16_t AZ = 0;
 int16_t GX = 0;
 int16_t GY = 0;
 int16_t GZ = 0;
+uint8_t MPU6050_FLAG = 0;
 
 
 /* USER CODE END PV */
@@ -118,7 +121,6 @@ int main(void)
   MX_TIM3_Init();
   MX_USART3_UART_Init();
   MX_I2C1_Init();
-   
   /* USER CODE BEGIN 2 */
 	//电机启动
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
@@ -128,28 +130,55 @@ int main(void)
 
 	PID_Init(&MotorA, DELTA_PID, 50.0f, 50.0f, 0.0f);
 	PID_Init(&MotorB, DELTA_PID, 50.0f, 50.0f, 0.0f);
+	PID_Init(&angle, POSITION_PID, 10.0f, 0.0f, 5.0f);
 	OLED_Init();
-//	MPU6050_Init();
+	MPU6050_Init();
 
 //	MotorA_Duty(2000);
-//	MotorB_Duty(2000);
+//	MotorB_Duty(2000); 
 //	Motor_Target_Set(30, 30);
 	
 	
   /* USER CODE END 2 */
- 
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
   while (1)
   {
 	  TCRT_Init();//寻迹
-	  printf("AX:%d, AY:%d, AZ:%d, GX:%d, GY:%d, GZ:%d",AX, AY, AZ, GX, GY, GZ  );
-	if(send_flag)
+//	  printf("AX:%d, AY:%d, AZ:%d, GX:%d, GY:%d, GZ:%d \r\n",AX, AY, AZ, GX, GY, GZ);
+//	  printf("yaw:%.2f, gz:%d\r\n", yaw_gyro, GZ);
+	  
+	 if(send_flag)
     {
         send_flag = 0;
         datavision_send();
-    }
+		  
+    }   
+	if(MPU6050_FLAG)
+	{
+//		printf("yaw:%.2f, pitch:%.2f, roll:%.2f\r\n", yaw_Kalman, pitch_Kalman, roll_Kalman);
+//		printf("yaw:%.2f, target:%.2f, now:%.2f, out:%.2f\r\n",yaw_Kalman, angle.target, angle.now, angle.out);
+//		MPU6050_GetData(&AX, &AY, &AZ, &GX, &GY, &GZ);
+		//陀螺仪角度
+		roll_gyro += (float)GX / 16.4 * 0.005;  
+		pitch_gyro += (float)GY / 16.4 * 0.005;  
+		yaw_gyro += (float)GZ / 16.4 * 0.005;
+		
+		//加速度计角度
+		roll_acc = atan((float)AY/AZ)*57.296;
+		pitch_acc = atan((float)AX/AZ)*57.296;
+		yaw_acc = atan((float)AY/AX)*57.296;
+		MPU6050_FLAG = 0;
+		
+		//卡尔曼滤波
+		roll_Kalman = Kalman_Filter(&KF_Roll, roll_acc, (float)GX / 16.4);
+		pitch_Kalman = Kalman_Filter(&KF_Pitch, pitch_acc, (float)GY / 16.4);
+		yaw_Kalman = yaw_gyro;
+	}
+	
+	
 	HAL_Delay(10);
     /* USER CODE END WHILE */
 
@@ -218,10 +247,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         else
             Encoder_CountB--;
     }
-//	else if (GPIO_Pin == GPIO_PIN_15)//MPU6050
-//    {
-//        MPU6050_GetData(&AX, &AY, &AZ, &GX, &GY, &GZ);
-//    }
+	else if (GPIO_Pin == GPIO_PIN_15)//MPU6050
+    {
+        MPU6050_FLAG = 1;
+    }
 }
 
 //编码器测速,TIM3定时中断
@@ -245,7 +274,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 int fputc(int ch, FILE *f)
 {
-	HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, 1);
 	return ch;
 }
 
@@ -279,6 +308,6 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
+  /* USER CODE END 6 */ 
 }
 #endif /* USE_FULL_ASSERT */

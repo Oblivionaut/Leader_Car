@@ -33,3 +33,5 @@ leader_car\pid.o: ../Core/Inc/gpio.h
 leader_car\pid.o: ../Core/Inc/main.h
 leader_car\pid.o: ../User_Lib/inc/PID.h
 leader_car\pid.o: ../Core/Inc/usart.h
+leader_car\pid.o: ../User_Lib/inc/MPU6050.h
+leader_car\pid.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h

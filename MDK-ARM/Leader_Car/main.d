@@ -41,3 +41,5 @@ leader_car\main.o: ../User_Lib/inc/usart3_debug.h
 leader_car\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
 leader_car\main.o: ../User_Lib/inc/tcrt5000.h
 leader_car\main.o: ../User_Lib/inc/MPU6050.h
+leader_car\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\math.h
+leader_car\main.o: ../User_Lib/inc/filter.h

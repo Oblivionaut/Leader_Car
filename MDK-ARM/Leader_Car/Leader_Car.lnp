@@ -29,6 +29,7 @@
 "leader_car\usart3_debug.o"
 "leader_car\tcrt5000.o"
 "leader_car\mpu6050.o"
+"leader_car\filter.o"
 --library_type=microlib --strict --scatter "Leader_Car\Leader_Car.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers

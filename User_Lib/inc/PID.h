@@ -24,7 +24,9 @@ void pid_cal(pid_t *pid);
 void PID_Control(void);
 void Motor_Target_Set(int speA, int speB);
 void datavision_send(void);
+void pid_Limit(pid_t *pid);
 
 extern pid_t MotorA;
 extern pid_t MotorB;
+extern pid_t angle;
 #endif

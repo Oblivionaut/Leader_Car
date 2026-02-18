@@ -4,7 +4,7 @@
 #include "stm32f1xx_hal.h"  
 
 // MPU6050设备地址
-#define MPU6050_ADDR        0xD0  
+#define MPU6050_ADDR (0x68 << 1)
 
 // MPU6050寄存器地址
 #define PWR_MGMT_1          0x6B
@@ -19,7 +19,9 @@
 #define GYRO_XOUT_H         0x43
 #define GYRO_YOUT_H         0x45
 #define GYRO_ZOUT_H         0x47
-
+extern float roll_gyro, pitch_gyro, yaw_gyro;
+extern float roll_acc, pitch_acc, yaw_acc;
+extern float roll_Kalman, pitch_Kalman, yaw_Kalman;
 extern I2C_HandleTypeDef hi2c1;  
 
 void MPU6050_Write(uint8_t addr, uint8_t dat);
