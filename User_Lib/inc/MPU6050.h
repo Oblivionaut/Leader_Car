@@ -23,11 +23,15 @@ extern float roll_gyro, pitch_gyro, yaw_gyro;
 extern float roll_acc, pitch_acc, yaw_acc;
 extern float roll_Kalman, pitch_Kalman, yaw_Kalman;
 extern I2C_HandleTypeDef hi2c1;  
+extern float yaw_start;
+extern float desired_angle;      
+extern uint8_t yaw_initialized;  
 
 void MPU6050_Write(uint8_t addr, uint8_t dat);
 uint8_t MPU6050_Read(uint8_t addr);
 void MPU6050_Init(void);
 void MPU6050_GetData(int16_t *AccX, int16_t *AccY, int16_t *AccZ, 
                      int16_t *GyroX, int16_t *GyroY, int16_t *GyroZ);
+void I2C_Bus_Recovery(void);
 
 #endif

@@ -45,7 +45,7 @@ void TCRT_Init(void)
 	}
 	switch(status)
 	{
-		case 1:
+		case 1: 
 			Motor_Target_Set(-Speed3, Speed1);
 		break;
 		
@@ -54,7 +54,19 @@ void TCRT_Init(void)
 		break;
 		
 		case 3:
-			Motor_Target_Set(Speed1, Speed1);
+			
+			if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_11) == 0 && HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_10) == 1)//左侧检测到黑线，右侧没有检测到黑线，左转
+			{
+				Motor_Target_Set(Speed3, Speed1);
+			}
+			else if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_11) == 1 && HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_10) == 0)//右侧检测到黑线，左侧没有检测到黑线，右转
+			{
+				Motor_Target_Set(Speed1, Speed3);
+			}
+			else if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_11) == 0 && HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_10) == 0)
+			{
+				Motor_Target_Set(Speed1, Speed1);
+			}
 		break;
 		
 		case 4:

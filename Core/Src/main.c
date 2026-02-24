@@ -48,7 +48,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 
 #define MG310_Min 0
 #define MG310_Max 50000
-#define Max_Duty 50000 //  duty/Max_Duty = 占空比
+#define Max_Duty 300 //  duty/Max_Duty = 占空比
 
 /* USER CODE END PD */
 
@@ -130,9 +130,11 @@ int main(void)
 
 	PID_Init(&MotorA, DELTA_PID, 50.0f, 50.0f, 0.0f);
 	PID_Init(&MotorB, DELTA_PID, 50.0f, 50.0f, 0.0f);
-	PID_Init(&angle, POSITION_PID, 10.0f, 0.0f, 5.0f);
+	PID_Init(&angle, POSITION_PID, 5.0f, 0.0f, 50.0f);
 	OLED_Init();
 	MPU6050_Init();
+	
+	desired_angle = 10.0f;	//设定角度
 
 //	MotorA_Duty(2000);
 //	MotorB_Duty(2000); 
@@ -146,21 +148,35 @@ int main(void)
 
   while (1)
   {
-	  TCRT_Init();//寻迹
-//	  printf("AX:%d, AY:%d, AZ:%d, GX:%d, GY:%d, GZ:%d \r\n",AX, AY, AZ, GX, GY, GZ);
+//	  TCRT_Init();//寻迹
+//	  printf("AX:%d, AY:%d, AZ:%d, GX:%d, GY:%d, GZ:%d \r\n",AX, AY, AZ, G	·		X, GY, GZ);
 //	  printf("yaw:%.2f, gz:%d\r\n", yaw_gyro, GZ);
 	  
 	 if(send_flag)
     {
         send_flag = 0;
-        datavision_send();
+//        datavision_send();
 		  
     }   
+	static uint32_t t = 0;
+	if(HAL_GetTick() - t > 50)  // 50ms 打一次
+		{
+			t = HAL_GetTick();
+			printf("yaw:%.2f, target:%.2f, now:%.2f, out:%.2f\r\n",
+               yaw_Kalman, angle.target, angle.now, angle.out);
+			if(__HAL_I2C_GET_FLAG(&hi2c1, I2C_FLAG_BUSY))
+{
+    printf("I2C BUSY LOCKED\r\n");
+}
+		}
+		
+	
 	if(MPU6050_FLAG)
 	{
+		
+		
 //		printf("yaw:%.2f, pitch:%.2f, roll:%.2f\r\n", yaw_Kalman, pitch_Kalman, roll_Kalman);
-//		printf("yaw:%.2f, target:%.2f, now:%.2f, out:%.2f\r\n",yaw_Kalman, angle.target, angle.now, angle.out);
-//		MPU6050_GetData(&AX, &AY, &AZ, &GX, &GY, &GZ);
+		MPU6050_GetData(&AX, &AY, &AZ, &GX, &GY, &GZ);
 		//陀螺仪角度
 		roll_gyro += (float)GX / 16.4 * 0.005;  
 		pitch_gyro += (float)GY / 16.4 * 0.005;  
@@ -250,6 +266,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	else if (GPIO_Pin == GPIO_PIN_15)//MPU6050
     {
         MPU6050_FLAG = 1;
+		
     }
 }
 
@@ -274,8 +291,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 int fputc(int ch, FILE *f)
 {
-	HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, 1);
-	return ch;
+    uint32_t timeout = HAL_GetTick() + 50;
+    while(__HAL_UART_GET_FLAG(&huart3, UART_FLAG_TXE) == RESET)
+    {
+        if(HAL_GetTick() > timeout) break;  
+    }
+    huart3.Instance->DR = (uint8_t)ch;
+    return ch;
 }
 
 /* USER CODE END 4 */
@@ -308,6 +330,8 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */ 
+  /* USER CODE END 6 */
 }
+
+
 #endif /* USE_FULL_ASSERT */

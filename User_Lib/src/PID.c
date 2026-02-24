@@ -70,12 +70,16 @@ void Motor_Target_Set(int speA, int speB)
 
 void PID_Control()
 {
+	if(!yaw_initialized) {
+        yaw_start = yaw_Kalman;
+        yaw_initialized = 1;
+    }
 	//角度环
-//	angle.target = -20;
-//	angle.now = yaw_Kalman;//偏航角
-//	pid_cal(&angle);
-//	//速度环
-//	Motor_Target_Set(-angle.out, angle.out);
+	angle.target = angle.target = yaw_start + desired_angle;;
+	angle.now = yaw_Kalman;//偏航角
+	pid_cal(&angle);
+	//速度环
+	Motor_Target_Set(-angle.out, angle.out);
     //累加编码器
     encA_sum += Encoder_CountA;
     encB_sum += Encoder_CountB;
@@ -84,7 +88,7 @@ void PID_Control()
     Encoder_CountB = 0;
 
     speed_tick++;
-
+ 
     //每 5 次更新一次速度 
     if(speed_tick >= 5)
     {

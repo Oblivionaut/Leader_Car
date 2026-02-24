@@ -1,8 +1,12 @@
 #include "MPU6050.h"
 #include <stdlib.h>
+#include "stm32f1xx_hal_i2c.h" 
 float roll_gyro, pitch_gyro, yaw_gyro;
 float roll_acc, pitch_acc, yaw_acc;
 float roll_Kalman, pitch_Kalman, yaw_Kalman;
+float yaw_start = 0;
+float desired_angle = 0;      
+uint8_t yaw_initialized = 0;  
 
 /**
  * @brief  向MPU6050写入一个字节
@@ -16,7 +20,7 @@ void MPU6050_Write(uint8_t addr, uint8_t dat)
     buf[0] = addr;
     buf[1] = dat;
     
-    HAL_I2C_Master_Transmit(&hi2c1, MPU6050_ADDR, buf, 2, HAL_MAX_DELAY);
+    HAL_I2C_Master_Transmit(&hi2c1, MPU6050_ADDR, buf, 2, 10);
 }
 
 /**
@@ -29,10 +33,10 @@ uint8_t MPU6050_Read(uint8_t addr)
     uint8_t dat;
     
     // 发送寄存器地址
-    HAL_I2C_Master_Transmit(&hi2c1, MPU6050_ADDR, &addr, 1, HAL_MAX_DELAY);
+    HAL_I2C_Master_Transmit(&hi2c1, MPU6050_ADDR, &addr, 1, 10);
     
     // 读取数据
-    HAL_I2C_Master_Receive(&hi2c1, MPU6050_ADDR, &dat, 1, HAL_MAX_DELAY);
+    HAL_I2C_Master_Receive(&hi2c1, MPU6050_ADDR, &dat, 1, 10);
     
     return dat;
 }
@@ -79,41 +83,95 @@ void MPU6050_Init(void)
 void MPU6050_GetData(int16_t *AccX, int16_t *AccY, int16_t *AccZ, 
                      int16_t *GyroX, int16_t *GyroY, int16_t *GyroZ)
 {
-    uint8_t DataH, DataL;
-    
-    // 读取加速度X轴
-    DataH = MPU6050_Read(ACCEL_XOUT_H);
-    DataL = MPU6050_Read(ACCEL_XOUT_H + 1);
-    *AccX = (DataH << 8) | DataL;
-    
-    // 读取加速度Y轴
-    DataH = MPU6050_Read(ACCEL_YOUT_H);
-    DataL = MPU6050_Read(ACCEL_YOUT_H + 1);
-    *AccY = (DataH << 8) | DataL;
-    
-    // 读取加速度Z轴
-    DataH = MPU6050_Read(ACCEL_ZOUT_H);
-    DataL = MPU6050_Read(ACCEL_ZOUT_H + 1);
-    *AccZ = (DataH << 8) | DataL;
-    
-    // 读取陀螺仪X轴
-    DataH = MPU6050_Read(GYRO_XOUT_H);
-    DataL = MPU6050_Read(GYRO_XOUT_H + 1);
-    *GyroX = (DataH << 8) | DataL;
-    
-    // 读取陀螺仪Y轴
-    DataH = MPU6050_Read(GYRO_YOUT_H);
-    DataL = MPU6050_Read(GYRO_YOUT_H + 1);
-    *GyroY = (DataH << 8) | DataL;
-    
-    // 读取陀螺仪Z轴
-    DataH = MPU6050_Read(GYRO_ZOUT_H);
-    DataL = MPU6050_Read(GYRO_ZOUT_H + 1);
-    *GyroZ = (DataH << 8) | DataL;
+    uint8_t buf[14];
+    uint8_t addr = ACCEL_XOUT_H;
+    HAL_StatusTypeDef ret;
 	
-	int16_t gyro_z_offset = 15;  // 零漂偏移量（根据实际校准调整）
+	if(__HAL_I2C_GET_FLAG(&hi2c1, I2C_FLAG_BUSY))
+{
+    I2C_Bus_Recovery();
+}
+
+    // 每次读取前检查I2C状态，若出错则复位
+    if(__HAL_I2C_GET_FLAG(&hi2c1, I2C_FLAG_BERR | I2C_FLAG_ARLO | I2C_FLAG_AF))
+    {
+        __HAL_I2C_CLEAR_FLAG(&hi2c1, I2C_FLAG_BERR | I2C_FLAG_ARLO | I2C_FLAG_AF);
+        HAL_I2C_DeInit(&hi2c1);
+        HAL_Delay(10);
+        MX_I2C1_Init();  // 重新初始化I2C
+    }
+
+    // 发送起始地址
+    ret = HAL_I2C_Master_Transmit(&hi2c1, MPU6050_ADDR, &addr, 1, 100);
+    if(ret != HAL_OK)
+    {
+        *AccX = *AccY = *AccZ = 0;  // 失败时置0，避免数据定格
+        *GyroX = *GyroY = *GyroZ = 0;
+        return;
+    }
+
+    // 批量读取数据
+    ret = HAL_I2C_Master_Receive(&hi2c1, MPU6050_ADDR, buf, 14, 100);
+    if(ret != HAL_OK)
+    {
+        *AccX = *AccY = *AccZ = 0;
+        *GyroX = *GyroY = *GyroZ = 0;
+        return;
+    }
+
+    // 解析数据
+    *AccX = (buf[0] << 8) | buf[1];
+    *AccY = (buf[2] << 8) | buf[3];
+    *AccZ = (buf[4] << 8) | buf[5];
+    *GyroX = (buf[8] << 8) | buf[9];
+    *GyroY = (buf[10] << 8) | buf[11];
+    *GyroZ = (buf[12] << 8) | buf[13];
+
+    // 零漂校准
+    int16_t gyro_z_offset = 15;
     *GyroZ -= gyro_z_offset;
-    if(abs(*GyroZ) < 20)  // 小阈值设为0，避免微小波动
+    if(abs(*GyroZ) < 20)
         *GyroZ = 0;
+}
+
+void I2C_Bus_Recovery(void)
+{
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+    HAL_I2C_DeInit(&hi2c1);
+
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+
+    GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_OD;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+
+    GPIO_InitStruct.Pin = GPIO_PIN_6;   // SCL
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = GPIO_PIN_7;   // SDA
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_SET);
+    HAL_Delay(1);
+
+    // 发送 9 个时钟脉冲释放从机
+    for(int i = 0; i < 9; i++)
+    {
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
+        HAL_Delay(1);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
+        HAL_Delay(1);
+    }
+
+    // 发送 STOP 条件
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_RESET);
+    HAL_Delay(1);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
+    HAL_Delay(1);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_SET);
+    HAL_Delay(1);
+
+    MX_I2C1_Init();
 }
 
