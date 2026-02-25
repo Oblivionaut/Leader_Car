@@ -5,7 +5,7 @@ float roll_gyro, pitch_gyro, yaw_gyro;
 float roll_acc, pitch_acc, yaw_acc;
 float roll_Kalman, pitch_Kalman, yaw_Kalman;
 float yaw_start = 0;
-float desired_angle = 0;      
+   
 uint8_t yaw_initialized = 0;  
 
 /**

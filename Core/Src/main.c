@@ -128,17 +128,14 @@ int main(void)
 	//定时器启动，编码器测速
 	HAL_TIM_Base_Start_IT(&htim3);
 
-	PID_Init(&MotorA, DELTA_PID, 50.0f, 50.0f, 0.0f);
-	PID_Init(&MotorB, DELTA_PID, 50.0f, 50.0f, 0.0f);
-	PID_Init(&angle, POSITION_PID, 5.0f, 0.0f, 50.0f);
+	PID_Init(&MotorA, DELTA_PID, 50.0f, 30.0f, 0.0f);
+	PID_Init(&MotorB, DELTA_PID, 50.0f, 30.0f, 0.0f);
+	PID_Init(&angle, POSITION_PID, 2.0f, 0.0f, 1.0f);
 	OLED_Init();
 	MPU6050_Init();
 	
 	desired_angle = 10.0f;	//设定角度
 
-//	MotorA_Duty(2000);
-//	MotorB_Duty(2000); 
-//	Motor_Target_Set(30, 30);
 	
 	
   /* USER CODE END 2 */
@@ -148,9 +145,20 @@ int main(void)
 
   while (1)
   {
-//	  TCRT_Init();//寻迹
+	  TCRT_Init();//寻迹
+
+//	  if(Left_Turn_Flag == 0 && Right_Turn_Flag == 0)
+//	  {
+//		TCRT_Init();//寻迹
+//	  }
+//	  else
+//	  {
+//		HAL_Delay(1000);
+//		Left_Turn_Flag = 0;
+//		Right_Turn_Flag = 0;
+//	  }
 //	  printf("AX:%d, AY:%d, AZ:%d, GX:%d, GY:%d, GZ:%d \r\n",AX, AY, AZ, G	·		X, GY, GZ);
-//	  printf("yaw:%.2f, gz:%d\r\n", yaw_gyro, GZ);
+
 	  
 	 if(send_flag)
     {
@@ -158,17 +166,17 @@ int main(void)
 //        datavision_send();
 		  
     }   
-	static uint32_t t = 0;
-	if(HAL_GetTick() - t > 50)  // 50ms 打一次
-		{
-			t = HAL_GetTick();
-			printf("yaw:%.2f, target:%.2f, now:%.2f, out:%.2f\r\n",
-               yaw_Kalman, angle.target, angle.now, angle.out);
-			if(__HAL_I2C_GET_FLAG(&hi2c1, I2C_FLAG_BUSY))
-{
-    printf("I2C BUSY LOCKED\r\n");
-}
-		}
+//static uint32_t t = 0;
+//	if(HAL_GetTick() - t > 50)  // 50ms 打一次
+//		{
+//			t = HAL_GetTick();
+//			printf("yaw:%.2f, target:%.2f, now:%.2f, out:%.2f\r\n",
+//               yaw_Kalman, angle.target, angle.now, angle.out);
+//			if(__HAL_I2C_GET_FLAG(&hi2c1, I2C_FLAG_BUSY))
+//{
+//    printf("I2C BUSY LOCKED\r\n");
+//}
+//		}
 		
 	
 	if(MPU6050_FLAG)

@@ -4,7 +4,10 @@
 #include "usart.h"
 #include "MPU6050.h"
 #include <stdlib.h>
+#include "tcrt5000.h"
 
+#define Left_Angle 10.0f
+#define Right_Angle -10.0f
 pid_t MotorA;
 pid_t MotorB;
 pid_t angle;
@@ -14,6 +17,8 @@ uint8_t tail[2] = {0xFC, 0x03};
 static uint16_t speed_tick = 0;     // 速度统计节拍
 static int32_t encA_sum = 0;
 static int32_t encB_sum = 0;
+
+float desired_angle = 0;  
 
 void datavision_send()
 {
@@ -70,16 +75,25 @@ void Motor_Target_Set(int speA, int speB)
 
 void PID_Control()
 {
-	if(!yaw_initialized) {
-        yaw_start = yaw_Kalman;
-        yaw_initialized = 1;
-    }
-	//角度环
-	angle.target = angle.target = yaw_start + desired_angle;;
-	angle.now = yaw_Kalman;//偏航角
-	pid_cal(&angle);
-	//速度环
-	Motor_Target_Set(-angle.out, angle.out);
+	if(Left_Turn_Flag == 1 && Right_Turn_Flag == 1){
+		if(!yaw_initialized) {
+			yaw_start = yaw_Kalman;
+			yaw_initialized = 1;
+		}
+		//角度环
+		if(Left_Turn_Flag)
+		{
+			desired_angle = Left_Angle;
+		}else if(Right_Turn_Flag)
+		{
+			desired_angle = Right_Angle;
+		}
+		angle.target = angle.target = yaw_start + desired_angle;;
+		angle.now = yaw_Kalman;//偏航角
+		pid_cal(&angle);
+		//速度环
+		Motor_Target_Set(-angle.out, angle.out);
+	}
     //累加编码器
     encA_sum += Encoder_CountA;
     encB_sum += Encoder_CountB;
