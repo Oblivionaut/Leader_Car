@@ -23,57 +23,20 @@ uint8_t Left_Turn_Flag = 0;
 uint8_t Right_Turn_Flag = 0;
 static uint8_t trace_status = 0;
 uint8_t ts;
-void TCRT_Init(void)
-{	
-	trace1 = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_3);
-	trace2 = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_4);
-	trace3 = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_5);
-	trace4 = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_8);
-	trace5 = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_9);
-	
-	 if(turn_lock == 0)
-    {
-        // 直角左转
-        if((trace1 == 0 && trace2 == 0) || 
-           (trace1 == 0 && trace2 == 0 && trace3 == 0) || 
-           (trace1 == 0 && trace2 == 0 && trace3 == 0 && trace4 == 0))
-        { 
-            turn_lock = 1;       
-            turn_timer = 30;     // 持续时间
-            trace_status = 1;
-        }
-        // 检测直角右转 
-        else if((trace4 == 0 && trace5 == 0) || 
-                (trace3 == 0 && trace4 == 0 && trace5 == 0) || 
-                (trace3 == 0 && trace4 == 0 && trace5 == 0 && trace2 == 0))
-        {
-            turn_lock = 1;       
-            turn_timer = 40;     // 持续时间
-            trace_status = 2;
-        }
-    }
-	//进入直角转弯
-	 if(turn_lock == 1)
-    {
-        if(trace_status == 1)
-        {
-            Motor_Target_Set(-Speed3, Speed1); // 左转
-        }
-        else if(trace_status == 2)
-        {
-            Motor_Target_Set(Speed1, -Speed3); // 右转
-        }
-        
-        turn_timer--;
-        if(turn_timer == 0)
-        {
-            turn_lock = 0; // 时间到
-            last_line_error = 0; //转弯结束直行
-        }
-        return; 
-    }
-	
-	 line_error = 0;//计算偏差
+
+typedef enum {
+    NORMAL_TRACKING,  // 0: 循迹
+    GO_STRAIGHT,       // 1: 先直行
+    TURN_ACTION        // 2: 到达位置
+} Turn_State_t;
+
+static Turn_State_t turn_state = NORMAL_TRACKING; // 当前状态
+static uint16_t straight_timer = 0; // 直行阶段的计时器
+static uint8_t cached_turn_dir = 0;  // 转弯方向：1=左，2=右
+
+void Normal_Tracing(void)
+{
+	line_error = 0;//计算偏差
 	if(trace1 == 0) line_error -= 4; // 最左
     if(trace2 == 0) line_error -= 2; // 左中
     if(trace3 == 0) line_error += 0; // 中间
@@ -101,7 +64,133 @@ void TCRT_Init(void)
     if(speed_right < -40) speed_right = -40;
 	
 	Motor_Target_Set(speed_left, speed_right);
+}
+
+void TCRT_Init(void)
+{	
+	trace1 = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_3);
+	trace2 = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_4);
+	trace3 = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_5);
+	trace4 = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_8);
+	trace5 = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_9);
 	
+	switch(turn_state)
+	{
+		case(NORMAL_TRACKING)://普通寻迹
+		{
+			uint8_t need_turn = 0;//是否需要转弯
+			//左转
+			if((trace1 == 0 && trace2 == 0) || (trace1 == 0 && trace2 == 0 && trace3 == 0))
+            {
+                cached_turn_dir = 1;
+                need_turn = 1;
+            }
+            // 右转
+            else if((trace4 == 0 && trace5 == 0) || (trace3 == 0 && trace4 == 0 && trace5 == 0))
+            {
+                cached_turn_dir = 2;
+                need_turn = 1;
+            }
+			
+			 if(need_turn)
+            {
+                // 先直行
+                turn_state = GO_STRAIGHT;
+                straight_timer = 20 ; // 直行时间
+            }
+            else//没有检测到转弯
+            {
+                // 循迹
+                Normal_Tracing();
+            }
+            break;
+
+		}
+		
+		 case GO_STRAIGHT://直行
+        {	
+            Motor_Target_Set(Speed1, Speed1);
+            
+            straight_timer--;
+            if(straight_timer == 0)
+            {
+                // 开始转弯
+                turn_state = TURN_ACTION;
+                // 设置转弯时间
+                turn_timer = (cached_turn_dir == 1) ? 40 : 40; 
+            }
+            break;
+        }
+		
+		 case TURN_ACTION: // 转弯
+        {
+           
+            if(cached_turn_dir == 1)
+            {
+                Motor_Target_Set(-Speed3, Speed1); // 左转
+            }
+            else
+            {
+                Motor_Target_Set(Speed1, -Speed3); // 右转
+            }
+
+            turn_timer--;
+            if(turn_timer == 0)
+            {
+                // 转弯结束
+                turn_state = NORMAL_TRACKING;
+                last_line_error = 0; // 清空误差
+            }
+            break;
+        }
+	}
+}
+
+
+
+//if(turn_lock == 0)
+//    {
+//        // 直角左转
+//        if((trace1 == 0 && trace2 == 0) || 
+//           (trace1 == 0 && trace2 == 0 && trace3 == 0) || 
+//           (trace1 == 0 && trace2 == 0 && trace3 == 0 && trace4 == 0))
+//        { 
+//            turn_lock = 1;       
+//            turn_timer = 3 0;     // 持续时间
+//            trace_status = 1;
+//        }
+//        // 检测直角右转 
+//        else if((trace4 == 0 && trace5 == 0) || 
+//                (trace3 == 0 && trace4 == 0 && trace5 == 0) || 
+//                (trace3 == 0 && trace4 == 0 && trace5 == 0 && trace2 == 0))
+//        {
+//            turn_lock = 1;       
+//            turn_timer = 40;     // 持续时间
+//            trace_status = 2;
+//        }
+//    }
+//	//进入直角转弯
+//	 if(turn_lock == 1)
+//    {
+//        if(trace_status == 1)
+//        {
+//            Motor_Target_Set(-Speed3, Speed1); // 左转
+//        }
+//        else if(trace_status == 2)
+//        {
+//            Motor_Target_Set(Speed1, -Speed3); // 右转
+//        }
+//        
+//        turn_timer--;
+//        if(turn_timer == 0)
+//        {
+//            turn_lock = 0; // 时间到
+//            last_line_error = 0; //转弯结束直行
+//        }
+//        return; 
+//    }
+
+
 //	if((HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_3) == 0 && HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_4) == 0) || (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_3) == 0 && HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_4) == 0 && HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_5) == 0) || (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_3) == 0 && HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_4) == 0 && HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_5) == 0 && HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_8 ) == 0))
 //	{ 
 //		trace_status = 1;	//一二三号识别到黑线，直角左转
@@ -205,10 +294,6 @@ void TCRT_Init(void)
 ////			}
 ////		break;
 //	}
-}
-
-
-
 
 
 

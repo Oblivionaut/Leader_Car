@@ -65,12 +65,7 @@ uint32_t last_print = 0;
 uint32_t last_wave_send = 0;
 volatile uint8_t send_flag = 0;
 static uint8_t div = 0;
-int16_t AX = 0;
-int16_t AY = 0;
-int16_t AZ = 0;
-int16_t GX = 0;
-int16_t GY = 0;
-int16_t GZ = 0;
+
 uint8_t MPU6050_FLAG = 0;
 
 
@@ -132,7 +127,7 @@ int main(void)
 	PID_Init(&MotorB, DELTA_PID, 50.0f, 30.0f, 0.0f);
 	PID_Init(&angle, POSITION_PID, 2.0f, 0.0f, 1.0f);
 	OLED_Init();
-	MPU6050_Init();
+
 	
 	desired_angle = 10.0f;	//设定角度
 
@@ -145,20 +140,22 @@ int main(void)
 
   while (1)
   {
-	  TCRT_Init();//寻迹
+//	  TCRT_Init();//寻迹
 
-//	  if(Left_Turn_Flag == 0 && Right_Turn_Flag == 0)
-//	  {
-//		TCRT_Init();//寻迹
-//	  }
-//	  else
-//	  {
-//		HAL_Delay(1000);
-//		Left_Turn_Flag = 0;
-//		Right_Turn_Flag = 0;
-//	  }
-//	  printf("AX:%d, AY:%d, AZ:%d, GX:%d, GY:%d, GZ:%d \r\n",AX, AY, AZ, G	·		X, GY, GZ);
+	  if(Left_Turn_Flag == 0 && Right_Turn_Flag == 0)
+	  {
+		TCRT_Init();//寻迹
+	  }
+	  else
+	  {
+		MPU6050_Init();
+		angle_count();
+		HAL_Delay(1000);
+		Left_Turn_Flag = 0;
+		Right_Turn_Flag = 0;
+	  }
 
+	printf("1");
 	  
 	 if(send_flag)
     {
@@ -166,40 +163,14 @@ int main(void)
 //        datavision_send();
 		  
     }   
-//static uint32_t t = 0;
-//	if(HAL_GetTick() - t > 50)  // 50ms 打一次
-//		{
-//			t = HAL_GetTick();
-//			printf("yaw:%.2f, target:%.2f, now:%.2f, out:%.2f\r\n",
-//               yaw_Kalman, angle.target, angle.now, angle.out);
-//			if(__HAL_I2C_GET_FLAG(&hi2c1, I2C_FLAG_BUSY))
-//{
-//    printf("I2C BUSY LOCKED\r\n");
-//}
-//		}
 		
 	
 	if(MPU6050_FLAG)
 	{
 		
 		
-//		printf("yaw:%.2f, pitch:%.2f, roll:%.2f\r\n", yaw_Kalman, pitch_Kalman, roll_Kalman);
-		MPU6050_GetData(&AX, &AY, &AZ, &GX, &GY, &GZ);
-		//陀螺仪角度
-		roll_gyro += (float)GX / 16.4 * 0.005;  
-		pitch_gyro += (float)GY / 16.4 * 0.005;  
-		yaw_gyro += (float)GZ / 16.4 * 0.005;
+
 		
-		//加速度计角度
-		roll_acc = atan((float)AY/AZ)*57.296;
-		pitch_acc = atan((float)AX/AZ)*57.296;
-		yaw_acc = atan((float)AY/AX)*57.296;
-		MPU6050_FLAG = 0;
-		
-		//卡尔曼滤波
-		roll_Kalman = Kalman_Filter(&KF_Roll, roll_acc, (float)GX / 16.4);
-		pitch_Kalman = Kalman_Filter(&KF_Pitch, pitch_acc, (float)GY / 16.4);
-		yaw_Kalman = yaw_gyro;
 	}
 	
 	
@@ -297,16 +268,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 }
 
-int fputc(int ch, FILE *f)
-{
-    uint32_t timeout = HAL_GetTick() + 50;
-    while(__HAL_UART_GET_FLAG(&huart3, UART_FLAG_TXE) == RESET)
-    {
-        if(HAL_GetTick() > timeout) break;  
-    }
-    huart3.Instance->DR = (uint8_t)ch;
-    return ch;
-}
 
 /* USER CODE END 4 */
 
@@ -340,6 +301,4 @@ void assert_failed(uint8_t *file, uint32_t line)
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }
-
-
 #endif /* USE_FULL_ASSERT */

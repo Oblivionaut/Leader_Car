@@ -5,9 +5,10 @@
 #include "MPU6050.h"
 #include <stdlib.h>
 #include "tcrt5000.h"
+#include <stdio.h>
 
-#define Left_Angle 10.0f
-#define Right_Angle -10.0f
+#define Left_Angle 5.0f
+#define Right_Angle -5.0f
 pid_t MotorA;
 pid_t MotorB;
 pid_t angle;
@@ -50,6 +51,9 @@ void PID_Init(pid_t *pid, uint32_t mode, float p, float i, float d)
 
 void Motor_Target_Set(int speA, int speB)
 {
+	int data[4];
+	data[0] = 0xFF;
+	data[3] = 0xFE;
 	if(speA >= 0)
 	{
 		motorA_dir = 1;
@@ -71,6 +75,16 @@ void Motor_Target_Set(int speA, int speB)
 		motorB_dir = 0;
 		MotorB.target = -speB;
 	}
+//	data[1] = speA;
+//	data[2] = speB;
+//	for(int j = 0; j < 3; j++)
+//	{
+//		printf("%d ", data[j]);
+//		if(j == 2)
+//		{
+//			printf("%d\r\n", data[3]);
+//		}
+//	}
 }
 
 void PID_Control()
@@ -155,23 +169,6 @@ void pid_cal(pid_t *pid)
 	pid->error[2] = pid->error[1];
 	pid->error[1] = pid->error[0];
 
-	//输出限制
-//    if(pid == &MotorA || pid == &MotorB)
-//    {
-//        // 电机环：输出非负，且不超过最大占空比
-//        if(pid->out >= MAX_DUTY)    
-//            pid->out = MAX_DUTY;
-//        if(pid->out <= 0)    
-//            pid->out = 0;
-//    }
-//    else
-//    {
-//        // 角度环：支持正负输出，限幅范围根据实际需求调整
-//        if(pid->out >= MAX_DUTY)    
-//            pid->out = MAX_DUTY;
-//        if(pid->out <= -MAX_DUTY)    
-//            pid->out = -MAX_DUTY;
-//    }
 }
 
 void pid_Limit(pid_t *pid)
@@ -183,4 +180,13 @@ void pid_Limit(pid_t *pid)
             pid->out = 0;
 }
 
-
+int fputc(int ch, FILE *f)
+{
+    uint32_t timeout = HAL_GetTick() + 50;
+    while(__HAL_UART_GET_FLAG(&huart3, UART_FLAG_TXE) == RESET)
+    {
+        if(HAL_GetTick() > timeout) break;  
+    }
+    huart3.Instance->DR = (uint8_t)ch;
+    return ch;
+}

@@ -1,6 +1,8 @@
 #ifndef __PID_h_
 #define __PID_h_
 
+#include <stdio.h>
+
 enum
 {
   POSITION_PID = 0,  // 位置式
@@ -25,6 +27,7 @@ void PID_Control(void);
 void Motor_Target_Set(int speA, int speB);
 void datavision_send(void);
 void pid_Limit(pid_t *pid);
+int fputc(int ch, FILE *f);
 
 extern pid_t MotorA;
 extern pid_t MotorB;

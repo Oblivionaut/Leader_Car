@@ -1,11 +1,20 @@
 #include "MPU6050.h"
 #include <stdlib.h>
 #include "stm32f1xx_hal_i2c.h" 
+#include <math.h>
+#include "filter.h"
 float roll_gyro, pitch_gyro, yaw_gyro;
 float roll_acc, pitch_acc, yaw_acc;
 float roll_Kalman, pitch_Kalman, yaw_Kalman;
 float yaw_start = 0;
    
+int16_t AX = 0;
+int16_t AY = 0;
+int16_t AZ = 0;
+int16_t GX = 0;
+int16_t GY = 0;
+int16_t GZ = 0;   
+
 uint8_t yaw_initialized = 0;  
 
 /**
@@ -175,3 +184,21 @@ void I2C_Bus_Recovery(void)
     MX_I2C1_Init();
 }
 
+void angle_count(void)
+{
+		MPU6050_GetData(&AX, &AY, &AZ, &GX, &GY, &GZ);
+		//陀螺仪角度
+		roll_gyro += (float)GX / 16.4 * 0.005;  
+		pitch_gyro += (float)GY / 16.4 * 0.005;  
+		yaw_gyro += (float)GZ / 16.4 * 0.005;
+		
+		//加速度计角度
+		roll_acc = atan((float)AY/AZ)*57.296;
+		pitch_acc = atan((float)AX/AZ)*57.296;
+		yaw_acc = atan((float)AY/AX)*57.296;
+		
+		//卡尔曼滤波
+		roll_Kalman = Kalman_Filter(&KF_Roll, roll_acc, (float)GX / 16.4);
+		pitch_Kalman = Kalman_Filter(&KF_Pitch, pitch_acc, (float)GY / 16.4);
+		yaw_Kalman = yaw_gyro;
+}

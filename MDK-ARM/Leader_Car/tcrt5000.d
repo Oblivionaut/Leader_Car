@@ -29,3 +29,4 @@ leader_car\tcrt5000.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h
 leader_car\tcrt5000.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h
 leader_car\tcrt5000.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h
 leader_car\tcrt5000.o: ../User_Lib/inc/PID.h
+leader_car\tcrt5000.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
